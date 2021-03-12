@@ -1,0 +1,150 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    管理员列表
+{% endblock %}
+
+{% block head %}
+    {{ super() }}
+{% endblock %}
+
+{% block bread %}
+    {{ self.title() }}
+{% endblock %}
+
+{% block content %}
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body ">
+                    <form class="layui-form layui-col-space5">
+                        <div class="layui-inline layui-show-xs-block">
+                            <input class="layui-input" autocomplete="off" placeholder="开始日" name="start" id="start">
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <input class="layui-input" autocomplete="off" placeholder="截止日" name="end" id="end">
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <input type="text" name="username" placeholder="请输入用户名" autocomplete="off"
+                                   class="layui-input">
+                        </div>
+                        <div class="layui-inline layui-show-xs-block">
+                            <button class="layui-btn" lay-submit="" lay-filter="sreach"><i
+                                    class="layui-icon">&#xe615;</i></button>
+                        </div>
+                    </form>
+                </div>
+                <div class="layui-card-header">
+                    <button class="layui-btn" onclick="xadmin.open('添加角色','/admin/role/add/', 600, 600)"><i class="layui-icon"></i>添加
+                    </button>
+                </div>
+                <div class="layui-card-body ">
+                    <table class="layui-table layui-form">
+                        <thead>
+                        <tr>
+                            <th>角色名称</th>
+                            <th width="10%">描述</th>
+                            <th width="45%">权限</th>
+                            <th width="10%">加入时间</th>
+                            <th width="10%" align="center">状态</th>
+                            <th>操作</th>
+                        </tr>
+                        </thead>
+                        <tbody class="x-cate">
+                            {% for role in roles %}
+                                <tr>
+                                    <td>{{ role.name }}</td>
+                                    <td>{{ role.describe or '' }}</td>
+                                    <td>{{ role.permission_names }}</td>
+                                    <td>{{ role.create_time }}</td>
+                                    <td>
+                                        <input type="checkbox" lay-data="{{ role.id or '' }}" name="status" lay-text="开启|停用"
+                                        {% if role.status == 1 %} checked {% endif %} lay-skin="switch"
+                                       lay-filter="status">
+                                    </td>
+                                    <td>
+                                        <div class="layui-btn-group">
+                                            <a class="layui-btn layui-btn layui-btn-xs item_edit" lay-data="{{ role.id }}">
+                                                <i class="layui-icon">&#xe642;</i>编辑
+                                            </a>
+                                            <a class="layui-btn-danger layui-btn layui-btn-xs item_delete" lay-data="{{ role.id }}">
+                                                <i class="layui-icon">&#xe640;</i>删除
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="layui-card-body ">
+                    <div id="page"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    layui.config({
+        base: "/static/js/"
+    }).use(['form', 'table', 'laydate', 'laypage', 'common'], function () {
+        var $ =  layui.$;
+        var form = layui.form,
+        laypage = layui.laypage,
+        laydate = layui.laydate,
+        common = layui.common;
+
+        //执行一个laydate实例
+        laydate.render({
+            elem: '#start' //指定元素
+        });
+
+        //执行一个laydate实例
+        laydate.render({
+            elem: '#end' //指定元素
+        });
+
+        //完整功能
+        laypage.render({
+            elem: 'page'
+            , count: {{ count }}
+            , layout: ['count', 'prev', 'page', 'next', 'limit', 'refresh', 'skip']
+            , jump: function (obj) {
+                //console.log(obj)
+            }
+        });
+
+        //监听开关
+        form.on('switch(status)', function () {
+            var id = $(this).attr("lay-data");
+            var status = 0;
+            if (this.checked) {
+                status = 1;
+            }
+            //发异步，把数据提交
+            var url = "/admin/role/change/" + id;
+            var data = {'status': status};
+            common.ajaxJsonCms('post', 'false', url, JSON.stringify(data));
+        });
+
+        $(".item_edit").click(function () {
+            //编辑
+            var id = $(this).attr("lay-data");
+            var url = "/admin/role/edit/" + id;
+            common.cmsLayOpen('编辑', url, '650px', '590px');
+
+        });
+
+        $(".item_delete").click(function () {
+            //删除
+            var id = $(this).attr("lay-data");
+            var url = "/admin/role/del/" + id;
+            common.ajaxCmsConfirm('系统提示', '确认删除角色?', url, null);
+        });
+    });
+</script>
+{% endblock %}
